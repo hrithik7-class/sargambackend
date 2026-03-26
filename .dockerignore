@@ -1,0 +1,13 @@
+# Exclude .env - use only env vars from docker-compose (REDIS_URL must be redis://redis:6379)
+.env
+.env.*
+!.env.example
+
+# Git, cache, etc.
+.git
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+venv
+.venv
