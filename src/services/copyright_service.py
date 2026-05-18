@@ -51,11 +51,8 @@ class CopyrightService:
                 settings.GENIUS_ACCESS_TOKEN,
                 timeout=8,
                 retries=1,
-                verbose=False,
                 skip_non_songs=True,
             )
-            # Silence the "Searching for…" console output
-            self._genius.verbose = False
         return self._genius
 
     async def check_copyright(

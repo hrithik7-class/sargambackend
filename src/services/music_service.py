@@ -171,17 +171,24 @@ class MusicService:
 
         prompt = _style_prompt_for_instrumental(genre, language, lyrics)
 
-        # Try musicgen-small (lighter model, may still be available)
+        # HuggingFace moved audio models to the new router endpoint (requires token)
+        # Old: api-inference.huggingface.co  →  404/410 for most audio models
+        # New: router.huggingface.co/hf-inference
         models_to_try = [
-            "facebook/musicgen-small",
-            "facebook/musicgen-stereo-small",
+            ("router",  "facebook/musicgen-small"),
+            ("router",  "facebook/musicgen-stereo-small"),
+            ("legacy",  "facebook/musicgen-small"),
         ]
 
+        def _url(kind: str, model_id: str) -> str:
+            if kind == "router":
+                return f"https://router.huggingface.co/hf-inference/models/{model_id}"
+            return f"https://api-inference.huggingface.co/models/{model_id}"
+
         async with httpx.AsyncClient(timeout=120.0) as client:
-            last_error = None
-            for model_id in models_to_try:
+            for kind, model_id in models_to_try:
                 resp = await client.post(
-                    f"https://api-inference.huggingface.co/models/{model_id}",
+                    _url(kind, model_id),
                     headers={
                         "Authorization": f"Bearer {settings.HUGGINGFACE_TOKEN}",
                         "Content-Type": "application/json",
@@ -195,17 +202,15 @@ class MusicService:
                     file_path.write_bytes(resp.content)
                     return f"/media/tracks/{track_id}.mp3"
                 if resp.status_code == 503:
-                    raise RuntimeError(
-                        "Hugging Face model is loading. Wait a minute and try again."
-                    )
-                if resp.status_code == 410:
-                    last_error = f"Model {model_id} has been removed from free Inference API (410 Gone)."
+                    raise RuntimeError("Hugging Face model is loading. Wait 1–2 minutes and try again.")
+                # 404 / 410 = model gone from this endpoint, try next
+                if resp.status_code in (404, 410):
                     continue
-                resp.raise_for_status()
 
         raise RuntimeError(
-            f"Hugging Face MusicGen is no longer available on the free Inference API. "
-            "Use FAL_KEY instead: sign up at https://fal.ai for free credits, add FAL_KEY to .env, and set MUSIC_PROVIDER=fal"
+            "Hugging Face MusicGen is no longer available on the free tier. "
+            "Switch to Fal.ai (free credits): sign up at https://fal.ai, "
+            "add FAL_KEY=... to .env, and set MUSIC_PROVIDER=fal"
         )
 
     async def _save_audio_from_output(self, track_id: int, output) -> str:
