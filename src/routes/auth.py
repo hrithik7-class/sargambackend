@@ -106,6 +106,28 @@ async def google_callback(request: Request, code: str, db: Session = Depends(get
     return await AuthController.google_callback(code, db, request=request)
 
 
+@router.post("/oauth/google/token", response_model=TokenResponse)
+@limiter.limit(settings.RATE_LIMIT_AUTH)
+async def google_token_signin(request: Request, body: dict, db: Session = Depends(get_db)):
+    """Sign in with a Google access token (used by NextAuth after it handles the OAuth flow)."""
+    from src.services.oauth_service import oauth_service
+    from src.services.auth_service import auth_service
+    from fastapi import HTTPException, status
+    access_token = body.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="access_token required")
+    try:
+        userinfo = await oauth_service.get_google_userinfo(access_token)
+        user = oauth_service.process_google_user(db, userinfo)
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Your account has been deactivated")
+        return auth_service.create_token_response(user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Google sign-in failed: {e}")
+
+
 @router.get("/callback/facebook", response_model=TokenResponse)
 @limiter.limit(settings.RATE_LIMIT_AUTH)
 async def facebook_callback(request: Request, code: str, db: Session = Depends(get_db)):

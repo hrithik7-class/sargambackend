@@ -121,6 +121,7 @@ class Track(Base):
     # 0–100: highest similarity score found (lower is safer)
     copyright_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     duration_seconds: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    cover_image_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

@@ -204,6 +204,7 @@ class TrackResponse(BaseModel):
     copyright_safe: Optional[bool] = None
     copyright_score: Optional[float] = None
     duration_seconds: Optional[float] = None
+    cover_image_url: Optional[str] = None
     published_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
