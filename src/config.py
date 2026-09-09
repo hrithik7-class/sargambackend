@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # AI — Lyrics generation (Groq)
     # Sign up free at https://console.groq.com/
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # AI — Music synthesis (choose one provider)
     # MUSIC_PROVIDER: replicate | fal | huggingface (default: first with valid token)

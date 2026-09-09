@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from src.config import settings
 from src.database import init_db
 from src.limiter import limiter
-from src.routes import auth_router, users_router, generate_router, tracks_router, analytics_router, payments_router
+from src.routes import auth_router, users_router, generate_router, tracks_router, analytics_router, payments_router, demo_router
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -99,6 +99,7 @@ app.include_router(generate_router)
 app.include_router(tracks_router)
 app.include_router(analytics_router)
 app.include_router(payments_router)
+app.include_router(demo_router)
 
 
 @app.get("/health")
