@@ -118,9 +118,14 @@ class LyricsService:
             ],
             temperature=0.88,
             max_tokens=1600,
+            # Reasoning models (gpt-oss, qwen3) otherwise burn the whole max_tokens
+            # budget on invisible chain-of-thought and return empty content.
+            reasoning_effort="low",
         )
 
-        lyrics = response.choices[0].message.content.strip()
+        lyrics = (response.choices[0].message.content or "").strip()
+        if not lyrics:
+            raise ValueError("Model returned empty lyrics — try again or switch GROQ_MODEL.")
 
         # Auto-generate a title if the user didn't supply one
         if not title:
@@ -138,7 +143,7 @@ class LyricsService:
         preview = "\n".join(lyrics.split("\n")[:8])
         try:
             resp = await client.chat.completions.create(
-                model="llama-3.1-8b-instant",  # fast, cheap, free on Groq
+                model="openai/gpt-oss-20b",  # fast, small, free on Groq
                 messages=[
                     {"role": "system", "content": TITLE_SYSTEM_PROMPT},
                     {
@@ -149,9 +154,13 @@ class LyricsService:
                     },
                 ],
                 temperature=0.7,
-                max_tokens=20,
+                max_tokens=200,
+                reasoning_effort="low",
             )
-            return resp.choices[0].message.content.strip().strip('"').strip("'")
+            content = (resp.choices[0].message.content or "").strip().strip('"').strip("'")
+            if not content:
+                raise ValueError("empty title")
+            return content
         except Exception:
             # Fallback: extract first non-tag, non-empty line
             for line in lyrics.split("\n"):
