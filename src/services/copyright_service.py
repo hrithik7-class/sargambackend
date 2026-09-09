@@ -12,6 +12,7 @@ from src.config import settings
 _SIMILARITY_THRESHOLD = 65.0  # flag if any match exceeds this %
 
 
+
 def _extract_search_query(lyrics: str, title: str) -> str:
     """Pick the most distinctive phrase for a Genius search."""
     if title:
